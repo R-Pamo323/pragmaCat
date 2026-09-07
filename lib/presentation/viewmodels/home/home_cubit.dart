@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/errors/app_exception.dart';
-import '../../../core/utils/string_similarity.dart';
+
 import '../../../domain/entities/cat_breed.dart';
 import '../../../domain/usecases/get_cat_breeds.dart';
 import 'home_state.dart';
@@ -97,6 +97,10 @@ class HomeCubit extends Cubit<HomeState> {
 
   void onSearchChanged(String query) {
     _debounce?.cancel();
+    if (query.trim().isEmpty) {
+      _applySearch('');
+      return;
+    }
     _debounce = Timer(
       const Duration(milliseconds: AppConstants.searchDebounceMilliseconds),
       () => _applySearch(query.trim()),
@@ -104,7 +108,7 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   void _applySearch(String query) {
-    emit(state.copyWith(searchQuery: query, clearSuggestion: true));
+    emit(state.copyWith(searchQuery: query));
 
     if (query.isEmpty) {
       emit(state.copyWith(filteredBreeds: state.breeds));
@@ -123,12 +127,7 @@ class HomeCubit extends Cubit<HomeState> {
       return;
     }
 
-    emit(
-      state.copyWith(
-        filteredBreeds: const [],
-        suggestion: _suggestionFor(query),
-      ),
-    );
+    emit(state.copyWith(filteredBreeds: const []));
   }
 
   Future<void> _ensureFullDataset() async {
@@ -175,16 +174,8 @@ class HomeCubit extends Cubit<HomeState> {
         state.breeds,
         state.searchQuery,
       );
-      if (filtered.isNotEmpty) {
-        emit(state.copyWith(filteredBreeds: filtered));
-      } else {
-        emit(
-          state.copyWith(
-            filteredBreeds: const [],
-            suggestion: _suggestionFor(state.searchQuery),
-          ),
-        );
-      }
+
+      emit(state.copyWith(filteredBreeds: filtered));
     } finally {
       _isLoadingAll = false;
     }
@@ -199,13 +190,6 @@ class HomeCubit extends Cubit<HomeState> {
           (CatBreed breed) => breed.name.toLowerCase().contains(normalized),
         )
         .toList();
-  }
-
-  String? _suggestionFor(String query) {
-    return StringSimilarity.findClosestMatch(
-      query,
-      state.breeds.map((CatBreed breed) => breed.name).toList(),
-    );
   }
 
   @override

@@ -47,10 +47,26 @@ class CatCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: onMorePressed,
-                    icon: const Icon(Icons.arrow_forward, size: 18),
-                    label: const Text('More'),
+                  child: InkWell(
+                    onTap: onMorePressed,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'More',
+                          style: AppFonts.body.copyWith(
+                            color: AppColors.primaryDark,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 18,
+                          color: AppColors.primaryDark,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

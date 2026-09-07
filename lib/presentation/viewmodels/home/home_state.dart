@@ -10,7 +10,6 @@ class HomeState {
     this.currentPage = 0,
     this.hasReachedEnd = false,
     this.searchQuery = '',
-    this.suggestion,
     this.errorMessage,
   });
 
@@ -20,7 +19,6 @@ class HomeState {
   final int currentPage;
   final bool hasReachedEnd;
   final String searchQuery;
-  final String? suggestion;
   final String? errorMessage;
 
   bool get isLoadingMore => status == HomeStatus.loadingMore;
@@ -35,8 +33,6 @@ class HomeState {
     int? currentPage,
     bool? hasReachedEnd,
     String? searchQuery,
-    String? suggestion,
-    bool clearSuggestion = false,
     String? errorMessage,
     bool clearError = false,
   }) {
@@ -47,7 +43,6 @@ class HomeState {
       currentPage: currentPage ?? this.currentPage,
       hasReachedEnd: hasReachedEnd ?? this.hasReachedEnd,
       searchQuery: searchQuery ?? this.searchQuery,
-      suggestion: clearSuggestion ? null : suggestion ?? this.suggestion,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     );
   }

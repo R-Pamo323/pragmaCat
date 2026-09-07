@@ -14,14 +14,26 @@ import '../../widgets/error_message.dart';
 import '../../widgets/loading_indicator.dart';
 import '../cat_detail/cat_detail_page.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  Widget build(BuildContext context) {
+    return BlocProvider<HomeCubit>(
+      create: (_) => HomeCubit(InjectionContainer.getCatBreeds),
+      child: const _HomeView(),
+    );
+  }
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomeView extends StatefulWidget {
+  const _HomeView();
+
+  @override
+  State<_HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<_HomeView> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
   String? _lastShownError;
@@ -47,14 +59,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _onSuggestionTap(String suggestion) {
-    _searchController.text = suggestion;
-    _searchController.selection = TextSelection.collapsed(
-      offset: suggestion.length,
-    );
-    context.read<HomeCubit>().onSearchChanged(suggestion);
-  }
-
   void _showPaginationError(String message) {
     if (message == _lastShownError) return;
     _lastShownError = message;
@@ -71,35 +75,28 @@ class _HomePageState extends State<HomePage> {
         titleTextStyle: AppFonts.pageTitle.copyWith(color: Colors.white),
       ),
       body: SafeArea(
-        child: BlocProvider<HomeCubit>(
-          create: (_) => HomeCubit(InjectionContainer.getCatBreeds),
-          child: BlocConsumer<HomeCubit, HomeState>(
-            listener: (BuildContext context, HomeState state) {
-              if (state.status != HomeStatus.error &&
-                  state.errorMessage != null &&
-                  state.breeds.isNotEmpty) {
-                _showPaginationError(state.errorMessage!);
-              }
-            },
-            builder: (BuildContext context, HomeState state) {
-              return Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(AppConstants.defaultPadding),
-                    child: CatSearchBar(
-                      onChanged: context.read<HomeCubit>().onSearchChanged,
-                      suggestion: state.suggestion,
-                      onSuggestionTap:
-                          state.suggestion == null || state.suggestion!.isEmpty
-                          ? null
-                          : () => _onSuggestionTap(state.suggestion!),
-                    ),
+        child: BlocConsumer<HomeCubit, HomeState>(
+          listener: (BuildContext context, HomeState state) {
+            if (state.status != HomeStatus.error &&
+                state.errorMessage != null &&
+                state.breeds.isNotEmpty) {
+              _showPaginationError(state.errorMessage!);
+            }
+          },
+          builder: (BuildContext context, HomeState state) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                  child: CatSearchBar(
+                    controller: _searchController,
+                    onChanged: context.read<HomeCubit>().onSearchChanged,
                   ),
-                  Expanded(child: _buildContent(context, state)),
-                ],
-              );
-            },
-          ),
+                ),
+                Expanded(child: _buildContent(context, state)),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -118,6 +115,9 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (state.filteredBreeds.isEmpty && state.searchQuery.isNotEmpty) {
+      if (state.isLoadingMore) {
+        return const LoadingIndicator();
+      }
       return _EmptyState(query: state.searchQuery);
     }
 
