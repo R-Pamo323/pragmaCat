@@ -37,9 +37,14 @@ class CatCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 _InfoRow(
                   icon: Icons.psychology_outlined,
-                  label: 'Otra cosa ${breed.height.metric}/5',
+                  label: 'Breed: ${breed.breedGroup ?? "Unknown"}',
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 2),
+                _InfoRow(
+                  icon: Icons.balance_outlined,
+                  label: 'Weight: ${breed.weight.imperial}kg',
+                ),
+                const SizedBox(height: 6),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
@@ -68,7 +73,6 @@ class _BreedImage extends StatelessWidget {
 
     if (url == null || url.isEmpty) {
       return Center(
-        //child: Icon(Icons.pets, size: 64, color: AppColors.textSecondary),
         child: Image.asset(
           AppImages.catNotFound,
           width: 64,
@@ -80,7 +84,7 @@ class _BreedImage extends StatelessWidget {
 
     return CachedNetworkImage(
       imageUrl: url,
-      fit: BoxFit.cover,
+      fit: BoxFit.fitWidth,
       placeholder: (_, _) => const LoadingIndicator(),
       errorWidget: (_, _, _) => const Center(
         child: Icon(
