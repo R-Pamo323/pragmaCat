@@ -1,17 +1,17 @@
-# pragma_cat
+# PragmaCat
 
-A new Flutter project.
+Proyecto de ejercicio de acercamiento al rol de Pragma, realizado en **Flutter** con el gestor de estados **Bloc/Cubit**
 
-## Getting Started
+La aplicación consume la API pública de "TheCatAPI"
 
-This project is a starting point for a Flutter application.
+## Tecnologías
 
-A few resources to get you started if this is your first Flutter project:
+- **Flutter**
+- **Bloc / Cubit**
+- **Dio**
+- **Clean Architecture**
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Demo
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Video de funcionamiento:
+[Ver video](https://drive.google.com/file/d/1SIZcn5iS5WvNoMifawKYvDS9bFUfK75m/view?usp=sharing)
