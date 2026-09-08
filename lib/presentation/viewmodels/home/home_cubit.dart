@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pragma_cat/domain/usecases/search_cat_breeds.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_constants.dart';
@@ -11,14 +12,15 @@ import '../../../domain/usecases/get_cat_breeds.dart';
 import 'home_state.dart';
 
 class HomeCubit extends Cubit<HomeState> {
-  HomeCubit(this._getCatBreeds) : super(const HomeState()) {
+  HomeCubit(this._getCatBreeds, this._searchCatBreeds)
+    : super(const HomeState()) {
     loadInitial();
   }
 
   final GetCatBreeds _getCatBreeds;
+  final SearchCatBreeds _searchCatBreeds;
 
   Timer? _debounce;
-  bool _isLoadingAll = false;
 
   Future<void> loadInitial() async {
     emit(state.copyWith(status: HomeStatus.loading, clearError: true));
@@ -34,7 +36,7 @@ class HomeCubit extends Cubit<HomeState> {
           state.copyWith(
             status: HomeStatus.loaded,
             breeds: data,
-            filteredBreeds: _filterBreeds(data, state.searchQuery),
+            filteredBreeds: data,
             currentPage: ApiConstants.initialPage,
             hasReachedEnd: data.length < ApiConstants.pageSize,
             clearError: true,
@@ -51,10 +53,10 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   Future<void> loadMore() async {
+    if (state.searchQuery.isNotEmpty) return;
     if (state.isLoadingMore || state.isInitialLoading || state.hasReachedEnd) {
       return;
     }
-    if (_isLoadingAll) return;
 
     emit(state.copyWith(status: HomeStatus.loadingMore));
 
@@ -71,7 +73,7 @@ class HomeCubit extends Cubit<HomeState> {
           state.copyWith(
             status: HomeStatus.loaded,
             breeds: allBreeds,
-            filteredBreeds: _filterBreeds(allBreeds, state.searchQuery),
+            filteredBreeds: allBreeds,
             currentPage: nextPage,
             hasReachedEnd: data.length < ApiConstants.pageSize,
             clearError: true,
@@ -88,7 +90,9 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   void retry() {
-    if (state.breeds.isEmpty) {
+    if (state.searchQuery.isNotEmpty) {
+      _search(state.searchQuery);
+    } else if (state.breeds.isEmpty) {
       loadInitial();
     } else {
       loadMore();
@@ -97,99 +101,51 @@ class HomeCubit extends Cubit<HomeState> {
 
   void onSearchChanged(String query) {
     _debounce?.cancel();
-    if (query.trim().isEmpty) {
-      _applySearch('');
+    final String trimmed = query.trim();
+
+    if (trimmed.isEmpty) {
+      emit(
+        state.copyWith(
+          searchQuery: '',
+          filteredBreeds: state.breeds,
+          clearError: true,
+        ),
+      );
       return;
     }
+
+    emit(state.copyWith(searchQuery: trimmed));
+
     _debounce = Timer(
       const Duration(milliseconds: AppConstants.searchDebounceMilliseconds),
-      () => _applySearch(query.trim()),
+      () => _search(trimmed),
     );
   }
 
-  void _applySearch(String query) {
-    emit(state.copyWith(searchQuery: query));
+  Future<void> _search(String query) async {
+    emit(state.copyWith(status: HomeStatus.loading));
 
-    if (query.isEmpty) {
-      emit(state.copyWith(filteredBreeds: state.breeds));
-      return;
-    }
+    final result = await _searchCatBreeds(query);
 
-    final List<CatBreed> filtered = _filterBreeds(state.breeds, query);
-    if (filtered.isNotEmpty) {
-      emit(state.copyWith(filteredBreeds: filtered));
-      return;
-    }
+    if (state.searchQuery != query) return;
 
-    if (!state.hasReachedEnd) {
-      emit(state.copyWith(filteredBreeds: const []));
-      unawaited(_ensureFullDataset());
-      return;
-    }
-
-    emit(state.copyWith(filteredBreeds: const []));
-  }
-
-  Future<void> _ensureFullDataset() async {
-    if (_isLoadingAll) return;
-    _isLoadingAll = true;
-
-    try {
-      while (!state.hasReachedEnd) {
-        emit(state.copyWith(status: HomeStatus.loadingMore));
-
-        final int nextPage = state.currentPage + 1;
-        final result = await _getCatBreeds(
-          page: nextPage,
-          limit: ApiConstants.pageSize,
+    switch (result) {
+      case Success(:final data):
+        emit(
+          state.copyWith(
+            status: HomeStatus.loaded,
+            filteredBreeds: data,
+            clearError: true,
+          ),
         );
-
-        switch (result) {
-          case Success(:final data):
-            final List<CatBreed> allBreeds = [...state.breeds, ...data];
-            emit(
-              state.copyWith(
-                status: HomeStatus.loaded,
-                breeds: allBreeds,
-                filteredBreeds: _filterBreeds(allBreeds, state.searchQuery),
-                currentPage: nextPage,
-                hasReachedEnd: data.length < ApiConstants.pageSize,
-                clearError: true,
-              ),
-            );
-          case Failure(:final exception):
-            emit(
-              state.copyWith(
-                status: HomeStatus.loaded,
-                errorMessage: exception.message,
-              ),
-            );
-            return;
-        }
-      }
-
-      if (state.searchQuery.isEmpty) return;
-
-      final List<CatBreed> filtered = _filterBreeds(
-        state.breeds,
-        state.searchQuery,
-      );
-
-      emit(state.copyWith(filteredBreeds: filtered));
-    } finally {
-      _isLoadingAll = false;
+      case Failure(:final exception):
+        emit(
+          state.copyWith(
+            status: HomeStatus.error,
+            errorMessage: exception.message,
+          ),
+        );
     }
-  }
-
-  List<CatBreed> _filterBreeds(List<CatBreed> breeds, String query) {
-    final String normalized = query.toLowerCase();
-    if (normalized.isEmpty) return breeds;
-
-    return breeds
-        .where(
-          (CatBreed breed) => breed.name.toLowerCase().contains(normalized),
-        )
-        .toList();
   }
 
   @override

@@ -36,13 +36,13 @@ class CatCard extends StatelessWidget {
                 _InfoRow(icon: Icons.location_on_outlined, label: breed.origin),
                 const SizedBox(height: 2),
                 _InfoRow(
-                  icon: Icons.psychology_outlined,
+                  icon: Icons.pets,
                   label: 'Breed: ${breed.breedGroup ?? "Unknown"}',
                 ),
                 const SizedBox(height: 2),
                 _InfoRow(
                   icon: Icons.balance_outlined,
-                  label: 'Weight: ${breed.weight.imperial}kg',
+                  label: 'Weight: ${breed.weight.imperial} kg',
                 ),
                 const SizedBox(height: 6),
                 Align(

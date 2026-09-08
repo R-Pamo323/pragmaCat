@@ -19,74 +19,78 @@ class CatDetailPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(breed.name),
         titleTextStyle: AppFonts.pageTitle.copyWith(color: Colors.white),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _DetailImage(image: breed.image),
-              Padding(
-                padding: const EdgeInsets.all(AppConstants.defaultPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(breed.name, style: AppFonts.headline),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _DetailChip(
-                          icon: Icons.location_on_outlined,
-                          label: breed.origin,
-                        ),
-                        _DetailChip(
-                          icon: Icons.psychology_outlined,
-                          label: 'Otra cosa ${breed.height.metric}/5',
-                        ),
-                        if (breed.lifeSpan.isNotEmpty)
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _DetailImage(image: breed.image),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(breed.name, style: AppFonts.headline),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
                           _DetailChip(
-                            icon: Icons.schedule,
-                            label: '${breed.lifeSpan} years',
+                            icon: Icons.location_on_outlined,
+                            label: breed.origin,
                           ),
-                        if (breed.weight.metric.isNotEmpty)
                           _DetailChip(
-                            icon: Icons.monitor_weight_outlined,
-                            label: '${breed.weight.metric} kg',
+                            icon: Icons.pets,
+                            label: breed.breedGroup ?? 'Unknown',
                           ),
+                          if (breed.lifeSpan.isNotEmpty)
+                            _DetailChip(
+                              icon: Icons.schedule,
+                              label: '${breed.lifeSpan} years',
+                            ),
+                          if (breed.weight.imperial.isNotEmpty)
+                            _DetailChip(
+                              icon: Icons.balance_outlined,
+                              label: '${breed.weight.imperial} kg',
+                            ),
+                          if (breed.height.imperial.isNotEmpty)
+                            _DetailChip(
+                              icon: Icons.height_outlined,
+                              label: '${breed.height.imperial} cm',
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (breed.description.isNotEmpty) ...[
+                        const _SectionLabel('Description'),
+                        const SizedBox(height: 4),
+                        Text(breed.description, style: AppFonts.body),
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    if (breed.description.isNotEmpty) ...[
-                      const _SectionLabel('Description'),
-                      const SizedBox(height: 4),
-                      Text(breed.description, style: AppFonts.body),
-                    ],
-                    if (breed.temperament.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      const _SectionLabel('Temperament'),
-                      const SizedBox(height: 4),
-                      Text(breed.temperament, style: AppFonts.body),
-                    ],
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _RatingChip(label: 'Otra cosa', value: 1),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _RatingChip(label: 'Otraco sosa', value: 2),
-                        ),
+                      if (breed.temperament.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        const _SectionLabel('Temperament'),
+                        const SizedBox(height: 4),
+                        Text(breed.temperament, style: AppFonts.body),
                       ],
-                    ),
-                  ],
+                      if (breed.history != null) ...[
+                        const SizedBox(height: 16),
+                        const _SectionLabel('History'),
+                        const SizedBox(height: 4),
+                        Text(breed.history!, style: AppFonts.body),
+                      ],
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -101,13 +105,11 @@ class _DetailImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String? url = image?.url;
-
     if (url == null || url.isEmpty) {
       return Container(
         height: 260,
         color: AppColors.primaryDark,
         alignment: Alignment.center,
-        //child: const Icon(Icons.pets, size: 72, color: Colors.white),
         child: Image.asset(
           AppImages.catNotFound,
           width: 72,
@@ -148,47 +150,11 @@ class _DetailChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Chip(
       avatar: Icon(icon, size: 18, color: AppColors.chipText),
-      backgroundColor: AppColors.chipBackground,
+      backgroundColor: AppColors.background,
       label: Text(label, style: AppFonts.caption),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppConstants.smallRadius),
-      ),
-    );
-  }
-}
-
-class _RatingChip extends StatelessWidget {
-  const _RatingChip({required this.label, required this.value});
-
-  final String label;
-  final int value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppConstants.smallRadius),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          Text(label, style: AppFonts.caption),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (int index) {
-              return Icon(
-                index < value ? Icons.star_rounded : Icons.star_border_rounded,
-                size: 18,
-                color: index < value
-                    ? AppColors.primary
-                    : AppColors.textSecondary,
-              );
-            }),
-          ),
-        ],
+        side: const BorderSide(color: AppColors.primaryDark, width: 1),
       ),
     );
   }

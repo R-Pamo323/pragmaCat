@@ -1,20 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:pragma_cat/presentation/viewmodels/splash/splash_state.dart';
 import '../../../core/constants/app_constants.dart';
-
-sealed class SplashState {
-  const SplashState();
-}
-
-class SplashLoading extends SplashState {
-  const SplashLoading();
-}
-
-class SplashNavigatingToHome extends SplashState {
-  const SplashNavigatingToHome();
-}
 
 class SplashCubit extends Cubit<SplashState> {
   SplashCubit() : super(const SplashLoading()) {

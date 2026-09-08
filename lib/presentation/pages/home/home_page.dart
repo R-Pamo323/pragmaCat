@@ -20,7 +20,10 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<HomeCubit>(
-      create: (_) => HomeCubit(InjectionContainer.getCatBreeds),
+      create: (_) => HomeCubit(
+        InjectionContainer.getCatBreeds,
+        InjectionContainer.searchCatBreeds,
+      ),
       child: const _HomeView(),
     );
   }
@@ -103,21 +106,26 @@ class _HomeViewState extends State<_HomeView> {
   }
 
   Widget _buildContent(BuildContext context, HomeState state) {
+    final bool isSearching = state.searchQuery.isNotEmpty;
+
     if (state.isInitialLoading && state.breeds.isEmpty) {
       return const LoadingIndicator();
     }
 
-    if (state.status == HomeStatus.error && state.breeds.isEmpty) {
+    if (state.status == HomeStatus.error &&
+        state.breeds.isEmpty &&
+        !isSearching) {
       return ErrorMessage(
         message: state.errorMessage ?? 'Something went wrong.',
         onRetry: context.read<HomeCubit>().retry,
       );
     }
 
-    if (state.filteredBreeds.isEmpty && state.searchQuery.isNotEmpty) {
-      if (state.isLoadingMore) {
-        return const LoadingIndicator();
-      }
+    if (isSearching && state.status == HomeStatus.loading) {
+      return const LoadingIndicator();
+    }
+
+    if (isSearching && state.filteredBreeds.isEmpty) {
       return _EmptyState(query: state.searchQuery);
     }
 

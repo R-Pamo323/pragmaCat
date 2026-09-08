@@ -52,6 +52,6 @@ class AppFonts {
     fontFamily: fontFamily,
     fontSize: captionSize,
     fontWeight: FontWeight.normal,
-    color: AppColors.textSecondary,
+    color: AppColors.textPrimary,
   );
 }
